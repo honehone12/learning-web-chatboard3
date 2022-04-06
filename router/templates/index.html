@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KEIJIBAN</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+  </head>
+  <body>
+    {{ .navbar }}
+
+    <div class="container">
+      
+      <p class="lead">
+        <a href="/topic/new">Start a thread</a> or join one below!
+      </p>
+      
+      {{ range .topics }}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <span class="lead"> <i class="fa fa-comment-o"></i> {{ .Topic }}</span>
+          </div>
+          <div class="panel-body">
+            Started by {{ .Owner }} - {{ .When }} - {{ .NumReplies }} posts.
+            <div class="pull-right">
+              <a href="/topic/read?id={{ .AsURL }}">Read more</a>
+            </div>
+          </div>
+        </div>
+      {{ end }}
+      
+      
+    </div> <!-- /container -->
+    
+    <script src="/static/js/bootstrap.min.js"></script>
+  </body>
+</html>
