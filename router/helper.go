@@ -166,7 +166,7 @@ func sendRequestAndWait(
 	functionToCall string,
 	dataTypeName string,
 	dataPtr interface{},
-	callback func(raws rabbitrpc.Raws),
+	callback func(raws rabbitrpc.Raws) error,
 ) error {
 	wait := make(chan error)
 	go func() {
@@ -176,8 +176,8 @@ func sendRequestAndWait(
 			dataTypeName,
 			dataPtr,
 			func(raws rabbitrpc.Raws) {
-				callback(raws)
-				wait <- nil
+				e := callback(raws)
+				wait <- e
 			},
 		)
 		if err != nil {
@@ -197,20 +197,17 @@ func extract(raws *rabbitrpc.Raws, dataPtr interface{}) error {
 	}
 
 	if envelop.Status == rabbitrpc.StatusError {
-		common.LogError(logger).Println("returned status is error")
+		common.LogWarning(logger).Println("returned status is error")
 		rerr := &rabbitrpc.RabbitRPCError{}
 		e = envelop.Extract(rerr)
 		if e != nil {
-			common.LogError(logger).Println(e.What)
 			return errors.New(e.What)
 		}
-		common.LogError(logger).Println(rerr.What)
 		return errors.New(rerr.What)
 	}
 
 	e = envelop.Extract(dataPtr)
 	if e != nil {
-		common.LogError(logger).Println(e.What)
 		return errors.New(e.What)
 	}
 	return nil
@@ -230,24 +227,27 @@ func checkLoggedIn(ctx *gin.Context) (err error) {
 		"readLogin",
 		"Login",
 		login,
-		func(raws rabbitrpc.Raws) {
+		func(raws rabbitrpc.Raws) (e error) {
 			loginPtr := &common.Login{}
-			e := extract(&raws, loginPtr)
+			e = extract(&raws, loginPtr)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 				return
 			}
 
 			ctx.Set(loginPtrLabel, loginPtr)
+			return
 		},
 	)
 	return
 }
 
 func checkSession(ctx *gin.Context) (err error) {
-	var sess *common.Session
-	_, err = pickupCookie(ctx, sessionCookieLabel)
+	sess := &common.Session{}
+	uuid, err := pickupCookie(ctx, sessionCookieLabel)
 	if err == nil {
+		sess.UuId = uuid
+		ctx.Set(sessionPtrLabel, sess)
 		sess, err = requesSessionExist(ctx)
 	}
 	if err != nil {
@@ -298,7 +298,7 @@ func storeCookie(
 ) (err error) {
 	//add exp
 	value = fmt.Sprintf(
-		"%s|%d",
+		"%s||%d",
 		value,
 		time.Now().Add(sessionDuration).Unix(),
 	)
@@ -308,8 +308,8 @@ func storeCookie(
 	}
 	// add mac value first
 	bytesVal := makeMAC(encrypted)
-	// separated '|'
-	bytesVal = append(bytesVal, []byte("|")...)
+	// separated '||'
+	bytesVal = append(bytesVal, []byte("||")...)
 	// add encrypted value
 	bytesVal = append(bytesVal, encrypted...)
 
@@ -341,7 +341,7 @@ func pickupCookie(ctx *gin.Context, name string) (value string, err error) {
 	if err != nil {
 		return
 	}
-	splited := bytes.SplitN(bytesVal, []byte("|"), 2)
+	splited := bytes.SplitN(bytesVal, []byte("||"), 2)
 	mac := splited[0]
 	encrypted := splited[1]
 	if !verifyMAC(mac, encrypted) {
@@ -352,7 +352,7 @@ func pickupCookie(ctx *gin.Context, name string) (value string, err error) {
 	if err != nil {
 		return
 	}
-	value, unixTimeStr, ok := strings.Cut(decrypted, "|")
+	value, unixTimeStr, ok := strings.Cut(decrypted, "||")
 	if !ok {
 		err = errors.New("separator not found")
 		return
@@ -410,7 +410,7 @@ func generateState() (stateRaw, stateAndMACEncoded string, err error) {
 		return
 	}
 	state = fmt.Sprintf(
-		"%s|%d",
+		"%s||%d",
 		state,
 		time.Now().Add(stateExp).Unix(),
 	)
@@ -419,7 +419,7 @@ func generateState() (stateRaw, stateAndMACEncoded string, err error) {
 	// same proc with cookie
 	stateAsBytes := []byte(state)
 	bytesVal := makeMAC(stateAsBytes)
-	bytesVal = append(bytesVal, []byte("|")...)
+	bytesVal = append(bytesVal, []byte("||")...)
 	bytesVal = append(bytesVal, stateAsBytes...)
 	stateAndMACEncoded = encode(bytesVal)
 	return
@@ -432,33 +432,34 @@ func requestSessionCreate(ctx *gin.Context) (sess *common.Session, err error) {
 		"createSession",
 		"Session",
 		sess,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, sess)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, sess)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	return
 }
 
 func requesSessionExist(ctx *gin.Context) (sess *common.Session, err error) {
-	uuid, err := pickupCookie(ctx, sessionCookieLabel)
+	sess, err = getSessionPtrFromCTX(ctx)
 	if err != nil {
 		return
 	}
-	sess = &common.Session{UuId: uuid}
 
 	err = sendRequestAndWait(
 		sessionsClient,
 		"readSession",
 		"Session",
 		sess,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, sess)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, sess)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	return
@@ -474,8 +475,9 @@ func requestSessionUpdate(sess *common.Session, ctx *gin.Context) (err error) {
 			sessPtr := &common.Session{}
 			e := extract(&raws, sessPtr)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	return
@@ -491,8 +493,9 @@ func requestLoginUpdate(login *common.Login, ctx *gin.Context) (err error) {
 			loginPtr := &common.Login{}
 			e := extract(&raws, loginPtr)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	return
@@ -512,7 +515,9 @@ func checkState(exposedVal, privateVal string) (err error) {
 	if err != nil {
 		return
 	}
-	splited := bytes.SplitN(bytesVal, []byte("|"), 2)
+	splited := bytes.SplitN(bytesVal, []byte("||"), 2)
+	// mac can store any bytes,
+	// this should be URL encoded until validation
 	macStored := splited[0]
 	stateStored := string(splited[1])
 
@@ -524,7 +529,7 @@ func checkState(exposedVal, privateVal string) (err error) {
 		err = errors.New("invalid state")
 		return
 	}
-	_, unixTimeStr, ok := strings.Cut(stateStored, "|")
+	_, unixTimeStr, ok := strings.Cut(stateStored, "||")
 	if !ok {
 		err = errors.New("separator not found")
 		return

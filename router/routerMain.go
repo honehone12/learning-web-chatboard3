@@ -150,7 +150,7 @@ func main() {
 		GenerateSessionStateMiddleware,
 		signupGet,
 	)
-	usersRoute.GET("logout", logoutGet)
+	usersRoute.GET("/logout", logoutGet)
 	usersRoute.POST("/signup-account", signupPost)
 	usersRoute.POST("/authenticate", authenticatePost)
 

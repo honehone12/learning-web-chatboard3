@@ -26,6 +26,7 @@ func SessionCheckMiddleware(ctx *gin.Context) {
 			return
 		}
 	}
+	ctx.Header("Cache-Control", "no-store")
 	ctx.Next()
 }
 
@@ -35,6 +36,7 @@ func LoggedInCheckMiddleware(ctx *gin.Context) {
 		common.LogWarning(logger).Println(err.Error())
 	}
 	ctx.Set(loggedInLabel, err == nil)
+	ctx.Header("Cache-Control", "no-store")
 	ctx.Next()
 }
 
@@ -51,7 +53,6 @@ func GenerateLoginStateMiddleware(ctx *gin.Context) {
 			common.LogError(logger).Printf("!!MIDDLEWARE NOTWORKING!! %s\n", err.Error())
 		}
 	}
-	ctx.Header("Cache-Control", "no-store")
 	ctx.Set(stateLabel, state)
 	ctx.Next()
 }
@@ -72,7 +73,6 @@ func GenerateSessionStateMiddleware(ctx *gin.Context) {
 		}
 	}
 
-	ctx.Header("Cache-Control", "no-store")
 	ctx.Set(stateLabel, state)
 	ctx.Next()
 }

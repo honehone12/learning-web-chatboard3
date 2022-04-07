@@ -51,9 +51,12 @@ const (
 func handleErrorInternal(
 	loggerErrorMsg string,
 	ctx *gin.Context,
+	redirect bool,
 ) {
 	common.LogError(logger).Println(loggerErrorMsg)
-	//errorRedirect(ctx, "internal error")
+	if redirect {
+		errorRedirect(ctx, "internal error")
+	}
 }
 
 func getHTMLElemntInternal(isLoggedin bool) (template.HTML, template.HTML) {
@@ -67,8 +70,7 @@ func getHTMLElemntInternal(isLoggedin bool) (template.HTML, template.HTML) {
 func indexGet(ctx *gin.Context) {
 	topics, err := indexGetInternal(ctx)
 	if err != nil {
-		handleErrorInternal(err.Error(), ctx)
-		return
+		handleErrorInternal(err.Error(), ctx, true)
 	}
 	navbar, _ := getHTMLElemntInternal(confirmLoggedIn(ctx))
 	ctx.HTML(
@@ -87,11 +89,12 @@ func indexGetInternal(ctx *gin.Context) (topics []common.Topic, err error) {
 		"readTopics",
 		"Topic",
 		&common.Topic{},
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, &topics)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, &topics)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	return
@@ -147,11 +150,11 @@ func logoutGet(ctx *gin.Context) {
 	if confirmLoggedIn(ctx) {
 		err := logoutGetInternal(ctx)
 		if err != nil {
-			handleErrorInternal(err.Error(), ctx)
+			handleErrorInternal(err.Error(), ctx, true)
 			return
 		}
 	}
-	ctx.Redirect(http.StatusFound, "/")
+	ctx.Redirect(http.StatusMovedPermanently, "/")
 }
 
 func logoutGetInternal(ctx *gin.Context) (err error) {
@@ -168,7 +171,7 @@ func logoutGetInternal(ctx *gin.Context) (err error) {
 		func(raws rabbitrpc.Raws) {
 			e := extract(&raws, &common.SimpleMessage{})
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
 		},
 	)
@@ -178,10 +181,10 @@ func logoutGetInternal(ctx *gin.Context) (err error) {
 func signupPost(ctx *gin.Context) {
 	err := signupPostInternal(ctx)
 	if err != nil {
-		handleErrorInternal(err.Error(), ctx)
+		handleErrorInternal(err.Error(), ctx, true)
 		return
 	}
-	ctx.Redirect(http.StatusFound, "/user/login")
+	ctx.Redirect(http.StatusMovedPermanently, "/user/login")
 }
 
 func signupPostInternal(ctx *gin.Context) (err error) {
@@ -206,7 +209,7 @@ func signupPostInternal(ctx *gin.Context) (err error) {
 			user := &common.User{}
 			e := extract(&raws, user)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
 		},
 	)
@@ -216,10 +219,10 @@ func signupPostInternal(ctx *gin.Context) (err error) {
 func authenticatePost(ctx *gin.Context) {
 	err := authenticatePostInternal(ctx)
 	if err != nil {
-		handleErrorInternal(err.Error(), ctx)
+		handleErrorInternal(err.Error(), ctx, true)
 		return
 	}
-	ctx.Redirect(http.StatusFound, "/")
+	ctx.Redirect(http.StatusMovedPermanently, "/")
 }
 
 func authenticatePostInternal(ctx *gin.Context) (err error) {
@@ -236,11 +239,12 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 		"readUser",
 		"User",
 		&authUser,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, &authUser)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, &authUser)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	if err != nil {
@@ -253,7 +257,7 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 		return
 	}
 
-	// delete invalid session data in db first
+	// delete invalid login data in db first
 	delSess := common.Login{
 		UserName: authUser.Name,
 		UserId:   authUser.Id,
@@ -266,7 +270,7 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 		func(raws rabbitrpc.Raws) {
 			e := extract(&raws, &common.SimpleMessage{})
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
 		},
 	)
@@ -278,11 +282,12 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 		"createLogin",
 		"User",
 		&authUser,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, &login)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, &login)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	if err != nil {
@@ -297,7 +302,7 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 func topicGet(ctx *gin.Context) {
 	topic, replies, err := topicGetInternal(ctx)
 	if err != nil {
-		handleErrorInternal(err.Error(), ctx)
+		handleErrorInternal(err.Error(), ctx, true)
 		return
 	}
 
@@ -332,11 +337,12 @@ func topicGetInternal(ctx *gin.Context,
 		"readATopic",
 		"Topic",
 		topic,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, topic)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, topic)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	if err != nil {
@@ -348,11 +354,12 @@ func topicGetInternal(ctx *gin.Context,
 		"readRepliesInTopic",
 		"Topic",
 		topic,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, &replies)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, &replies)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	if err != nil {
@@ -396,11 +403,11 @@ func newTopicPost(ctx *gin.Context) {
 
 	err := newTopicPostInternal(ctx)
 	if err != nil {
-		handleErrorInternal(err.Error(), ctx)
+		handleErrorInternal(err.Error(), ctx, true)
 		return
 	}
 
-	ctx.Redirect(http.StatusFound, "/")
+	ctx.Redirect(http.StatusMovedPermanently, "/")
 }
 
 func newTopicPostInternal(ctx *gin.Context) (err error) {
@@ -414,16 +421,17 @@ func newTopicPostInternal(ctx *gin.Context) (err error) {
 		Owner:  login.UserName,
 		UserId: login.UserId,
 	}
-	err = sendRequest(
+	err = sendRequestAndWait(
 		topicsClient,
 		"createTopic",
 		"Topic",
 		&topic,
-		func(raws rabbitrpc.Raws) {
-			e := extract(&raws, &topic)
+		func(raws rabbitrpc.Raws) (e error) {
+			e = extract(&raws, &topic)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
+			return
 		},
 	)
 	return
@@ -437,11 +445,11 @@ func newReplyPost(ctx *gin.Context) {
 
 	topiUuId, err := newReplyPostInternal(ctx)
 	if err != nil {
-		handleErrorInternal(err.Error(), ctx)
+		handleErrorInternal(err.Error(), ctx, true)
 		return
 	}
 	encoded := encode([]byte(topiUuId))
-	ctx.Redirect(http.StatusFound, fmt.Sprint("/topic/read?id=", encoded))
+	ctx.Redirect(http.StatusMovedPermanently, fmt.Sprint("/topic/read?id=", encoded))
 }
 
 func newReplyPostInternal(ctx *gin.Context) (topiUuId string, err error) {
@@ -471,7 +479,7 @@ func newReplyPostInternal(ctx *gin.Context) (topiUuId string, err error) {
 		func(raws rabbitrpc.Raws) {
 			e := extract(&raws, &reply)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
 		},
 	)
@@ -488,7 +496,7 @@ func newReplyPostInternal(ctx *gin.Context) (topiUuId string, err error) {
 		func(raws rabbitrpc.Raws) {
 			e := extract(&raws, &topic)
 			if e != nil {
-				handleErrorInternal(e.Error(), ctx)
+				handleErrorInternal(e.Error(), ctx, false)
 			}
 		},
 	)
