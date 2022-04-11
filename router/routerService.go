@@ -113,6 +113,10 @@ func errorRedirect(ctx *gin.Context, msg string) {
 
 func errorGet(ctx *gin.Context) {
 	errMsg := ctx.Query("msg")
+	err := validate.Var(errMsg, "lowercase")
+	if err != nil {
+		errMsg = "internal error"
+	}
 	navbar, _ := getHTMLElemntInternal(confirmLoggedIn(ctx))
 	ctx.HTML(
 		http.StatusFound,
@@ -231,8 +235,14 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 		return
 	}
 
+	email := ctx.PostForm("email")
+	err = validate.Var(email, "email")
+	if err != nil {
+		return
+	}
+
 	authUser := common.User{
-		Email: ctx.PostForm("email"),
+		Email: email,
 	}
 	err = sendRequestAndWait(
 		usersClient,
@@ -329,7 +339,12 @@ func topicGetInternal(ctx *gin.Context,
 	if err != nil {
 		return
 	}
+
 	uuid := string(bytes)
+	err = validate.Var(uuid, "uuid4")
+	if err != nil {
+		return
+	}
 
 	topic = &common.Topic{UuId: uuid}
 	err = sendRequestAndWait(

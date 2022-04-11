@@ -17,6 +17,8 @@ const (
 	ExchangeKindTopic  = "topic"
 )
 
+var rabbitLogger *log.Logger
+
 type Raws struct {
 	Body          []byte
 	CorrelationId string
@@ -52,6 +54,13 @@ type RabbitClient struct {
 	ExchangeKind        string
 	PublishRoutingKey   string
 	SubscribeRoutingKey string
+}
+
+func openLogger() {
+	if rabbitLogger == nil {
+		rabbitLogger = log.Default()
+		rabbitLogger.SetPrefix("[RabbitMQ RPC] ")
+	}
 }
 
 func NewRPCClient(
@@ -110,6 +119,7 @@ func NewRPCClient(
 		)
 	}()
 
+	openLogger()
 	return
 }
 
@@ -169,6 +179,7 @@ func NewRPCServer(
 		)
 	}()
 
+	openLogger()
 	return
 }
 
@@ -197,18 +208,18 @@ func redial(
 			select {
 			case sessions <- sess:
 			case <-ctx.Done():
-				log.Println("shutting down session factory")
+				rabbitLogger.Println("shutting down session factory")
 				return
 			}
 
 			conn, err := amqp.Dial(url)
 			if err != nil {
-				log.Fatalf("cannot (re)dial: %v %q", err, url)
+				rabbitLogger.Fatalf("cannot (re)dial: %v %q", err, url)
 			}
 
 			ch, err := conn.Channel()
 			if err != nil {
-				log.Fatalf("cannot create channel: %v", err)
+				rabbitLogger.Fatalf("cannot create channel: %v", err)
 			}
 
 			err = ch.Qos(
@@ -217,7 +228,7 @@ func redial(
 				false,
 			)
 			if err != nil {
-				log.Fatalln("failed to set QoS")
+				rabbitLogger.Fatalln("failed to set QoS")
 			}
 
 			err = ch.ExchangeDeclare(
@@ -230,13 +241,13 @@ func redial(
 				nil,
 			)
 			if err != nil {
-				log.Fatalf("cannot declare exchange: %v", err)
+				rabbitLogger.Fatalf("cannot declare exchange: %v", err)
 			}
 
 			select {
 			case sess <- session{conn, ch}:
 			case <-ctx.Done():
-				log.Println("shutting down new session")
+				rabbitLogger.Println("shutting down new session")
 				return
 			}
 		}
@@ -260,12 +271,12 @@ func (rabbit *RabbitClient) publisherRoutine(
 		pub := <-sess
 		err := pub.Confirm(false)
 		if err != nil {
-			log.Printf("publisher confirms not supported %v", err)
+			rabbitLogger.Printf("publisher confirms not supported %v", err)
 			close(confirmCh)
 		} else {
 			pub.NotifyPublish(confirmCh)
 		}
-		log.Printf("publishing...")
+		rabbitLogger.Printf("publishing...")
 
 	publishLoop:
 		for {
@@ -277,7 +288,7 @@ func (rabbit *RabbitClient) publisherRoutine(
 					break publishLoop
 				}
 				if !confirmed.Ack {
-					log.Printf(
+					rabbitLogger.Printf(
 						"nack message %d, body: %q",
 						confirmed.DeliveryTag,
 						string(raws.Body),
@@ -329,7 +340,7 @@ func (rabbit *RabbitClient) subscriberRoutine(
 			nil,
 		)
 		if err != nil {
-			log.Printf(
+			rabbitLogger.Printf(
 				"cannot consume from exclusive queue: %q %v",
 				rabbit.SubscribeQueueName,
 				err,
@@ -345,7 +356,7 @@ func (rabbit *RabbitClient) subscriberRoutine(
 			nil,
 		)
 		if err != nil {
-			log.Printf(
+			rabbitLogger.Printf(
 				"cannot cosume without a binding to exchange: %q %v",
 				rabbit.ExchangeName,
 				err,
@@ -363,7 +374,7 @@ func (rabbit *RabbitClient) subscriberRoutine(
 			nil,
 		)
 		if err != nil {
-			log.Printf(
+			rabbitLogger.Printf(
 				"cannot consume from: %q %v",
 				rabbit.SubscribeQueueName,
 				err,
@@ -371,7 +382,7 @@ func (rabbit *RabbitClient) subscriberRoutine(
 			return
 		}
 
-		log.Printf("subscribed...")
+		rabbitLogger.Printf("subscribed...")
 
 		for deli := range deliveries {
 			messages <- Raws{

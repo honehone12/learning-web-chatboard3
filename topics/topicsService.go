@@ -126,7 +126,7 @@ func incrementTopicInternal(topic *common.Topic) (err error) {
 
 func readRepliesInTopic(topic *common.Topic, corrId string) {
 	// is there a way to check valid id before?
-	replies, err := readReplyInTopicSQL(topic)
+	replies, err := readRepliesInTopicSQL(topic)
 	if err != nil {
 		common.HandleError(server, logger, err.Error(), corrId)
 		return
@@ -203,7 +203,7 @@ func updateTopicSQL(topic *common.Topic) (err error) {
 	return
 }
 
-func readReplyInTopicSQL(topic *common.Topic) (posts []common.Reply, err error) {
+func readRepliesInTopicSQL(topic *common.Topic) (posts []common.Reply, err error) {
 	err = dbEngine.
 		Table(repliesTable).
 		Where("topic_id = ?", topic.Id).

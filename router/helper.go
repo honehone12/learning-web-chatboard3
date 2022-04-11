@@ -34,9 +34,9 @@ const (
 	aes256KeySize uint          = 32
 	macKeySize    uint          = 32
 	stateSize     uint          = 32
-	sessionExp    time.Duration = time.Hour * 8
+	longinExp     time.Duration = time.Hour * 8
 	stateExp      time.Duration = time.Minute * 20
-	visitExp      time.Duration = time.Hour * 24 * 365
+	sessionExp    time.Duration = time.Hour * 24 * 365
 )
 
 var helper struct {
@@ -272,7 +272,7 @@ func storeLoginCookie(ctx *gin.Context, value string) (err error) {
 		ctx,
 		value,
 		loginCookieLabel,
-		sessionExp,
+		longinExp,
 		0,
 	)
 	return
@@ -283,7 +283,7 @@ func storeSessionCookie(ctx *gin.Context, value string) (err error) {
 		ctx,
 		value,
 		sessionCookieLabel,
-		visitExp,
+		sessionExp,
 		60*60*24*365,
 	)
 	return

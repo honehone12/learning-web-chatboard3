@@ -16,6 +16,12 @@ const (
 	stateLabel      = "state"
 )
 
+func SetCommonHeadersMiddleware(ctx *gin.Context) {
+	ctx.Header("Cache-Control", "no-store")
+	ctx.Header("X-Frame-Options", "DENY")
+	ctx.Next()
+}
+
 func SessionCheckMiddleware(ctx *gin.Context) {
 	err := checkSession(ctx)
 	if err != nil {
@@ -26,7 +32,6 @@ func SessionCheckMiddleware(ctx *gin.Context) {
 			return
 		}
 	}
-	ctx.Header("Cache-Control", "no-store")
 	ctx.Next()
 }
 
@@ -36,7 +41,6 @@ func LoggedInCheckMiddleware(ctx *gin.Context) {
 		common.LogWarning(logger).Println(err.Error())
 	}
 	ctx.Set(loggedInLabel, err == nil)
-	ctx.Header("Cache-Control", "no-store")
 	ctx.Next()
 }
 

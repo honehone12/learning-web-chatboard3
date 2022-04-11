@@ -95,7 +95,7 @@ func readLogin(login *common.Login, corrId string) {
 
 func readLoginInternal(login *common.Login) (err error) {
 	if common.IsEmpty(login.UuId) {
-		err = errors.New("need uuid for finding session")
+		err = errors.New("need uuid for finding login")
 		return
 	}
 	err = readLoginSQL(login)
@@ -174,7 +174,7 @@ func readUserSQL(user *common.User) (err error) {
 		Table(usersTable).
 		Get(user)
 	if err == nil && !ok {
-		err = errors.New("no such users")
+		err = errors.New("no such user")
 	}
 	return
 }
@@ -185,7 +185,7 @@ func readLoginSQL(login *common.Login) (err error) {
 		Table(loginsTable).
 		Get(login)
 	if err == nil && !ok {
-		err = errors.New("no such session")
+		err = errors.New("no such login")
 	}
 	return
 }

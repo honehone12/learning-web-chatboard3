@@ -41,7 +41,7 @@ func readSession(sess *common.Session, corrId string) {
 
 func readSessionInternal(sess *common.Session) (err error) {
 	if common.IsEmpty(sess.UuId) {
-		err = errors.New("need uuid for finding visit")
+		err = errors.New("need uuid for finding session")
 		return
 	}
 	err = readSessionSQL(sess)
@@ -88,7 +88,7 @@ func readSessionSQL(sess *common.Session) (err error) {
 		Table(sessionsTable).
 		Get(sess)
 	if err == nil && !ok {
-		err = errors.New("no such viz")
+		err = errors.New("no such session")
 	}
 	return
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 var config *common.Configuration
@@ -16,6 +17,7 @@ var sessionsClient *rabbitrpc.RabbitClient
 var callbackPool rabbitrpc.CallbackPool
 var callbackCh chan rabbitrpc.Raws
 var doneCh chan string
+var validate *validator.Validate
 
 func main() {
 	var err error
@@ -120,6 +122,9 @@ func main() {
 		}
 	}()
 
+	// validator
+	validate = validator.New()
+
 	//gin
 	webEngine := gin.Default()
 	// setup templates
@@ -129,17 +134,25 @@ func main() {
 	//setup routes
 	webEngine.GET(
 		"/",
-		SessionCheckMiddleware, LoggedInCheckMiddleware,
+		SetCommonHeadersMiddleware,
+		SessionCheckMiddleware,
+		LoggedInCheckMiddleware,
 		indexGet,
 	)
 	webEngine.GET(
 		"/error",
-		SessionCheckMiddleware, LoggedInCheckMiddleware,
+		SetCommonHeadersMiddleware,
+		SessionCheckMiddleware,
+		LoggedInCheckMiddleware,
 		errorGet,
 	)
 
 	usersRoute := webEngine.Group("/user")
-	usersRoute.Use(SessionCheckMiddleware, LoggedInCheckMiddleware)
+	usersRoute.Use(
+		SetCommonHeadersMiddleware,
+		SessionCheckMiddleware,
+		LoggedInCheckMiddleware,
+	)
 	usersRoute.GET(
 		"/login",
 		GenerateSessionStateMiddleware,
@@ -155,7 +168,11 @@ func main() {
 	usersRoute.POST("/authenticate", authenticatePost)
 
 	threadsRoute := webEngine.Group("/topic")
-	threadsRoute.Use(SessionCheckMiddleware, LoggedInCheckMiddleware)
+	threadsRoute.Use(
+		SetCommonHeadersMiddleware,
+		SessionCheckMiddleware,
+		LoggedInCheckMiddleware,
+	)
 	threadsRoute.GET(
 		"/read",
 		GenerateLoginStateMiddleware,
