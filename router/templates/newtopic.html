@@ -14,12 +14,19 @@
       
         <form role="form" action="/topic/create" method="post">
           <input type="hidden" name="state" value="{{ .state }}">
-          <div class="lead">Start a new thread with the following topic</div>
-            <div class="form-group">
-              <textarea class="form-control" name="topic" id="topic" placeholder="Thread topic here" rows="4"></textarea>
-              <br/>
-              <br/>
-              <button class="btn btn-lg btn-primary pull-right" type="submit">Start this thread</button>
+          
+          <div class="container pt-4">
+            <header class="py-3 my-3">
+              <p class="fs-3">
+                Let's start new!!  
+              </p>
+            </header>
+          </div>
+      
+          <div class="form-group">
+            <textarea class="form-control" name="topic" id="topic" placeholder="New topic here" rows="4"></textarea>
+            <br/>
+            <button class="btn btn-lg btn-primary pull-right" type="submit">Start this topic!!</button>
           </div>
         </form>
       

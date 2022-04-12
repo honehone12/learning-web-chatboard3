@@ -10,29 +10,36 @@
   <body>
     {{ .navbar }}
 
+  <div class="container">
+
+    <div class="container pt-4">
+      <header class="py-3 my-3">
+        <p class="fs-3">
+          <a href="/topic/new">Start a topic</a> or join one below!
+        </p>
+      </header>
+    </div>
+
     <div class="container">
-      
-      <p class="lead">
-        <a href="/topic/new">Start a thread</a> or join one below!
-      </p>
-      
       {{ range .topics }}
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <span class="lead"> <i class="fa fa-comment-o"></i> {{ .Topic }}</span>
-          </div>
-          <div class="panel-body">
-            Started by {{ .Owner }} - {{ .When }} - {{ .NumReplies }} posts.
-            <div class="pull-right">
-              <a href="/topic/read?id={{ .AsURL }}">Read more</a>
-            </div>
-          </div>
+      <div class="p-3 mb-3 bg-light rounded-3">
+        <div class="p-2">
+          <h6 class="display-6 fw-bold"> {{ .Topic }}</h6>
+        </div>
+      
+      
+        <div class="col-md fs-5 pb-3">
+        Started by {{ .Owner }} - {{ .When }} - {{ .NumReplies }} posts.
+        </div>
+        <h5 class="heading-5">
+          <a class="badge bg-primary" href="/topic/read?id={{ .AsURL }}">Read more</a>
+        </h5>
         </div>
       {{ end }}
-      
-      
-    </div> <!-- /container -->
+    </div>
     
+  </div>
+
     <script src="/static/js/bootstrap.min.js"></script>
   </body>
 </html>

@@ -10,13 +10,13 @@
   <body>
     {{ .navbar }}
 
-    <div class="container">
-      
-
-      <p class="lead">{{ .msg }}</p>
-      
-      
-    </div> <!-- /container -->
+    <div class="container pt-4">
+      <header class="py-3 my-3">
+        <p class="fs-3">
+          {{ .msg }}  
+        </p>
+      </header>
+    </div>
     
     <script src="/static/js/bootstrap.min.js"></script>
   </body>

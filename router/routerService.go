@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	publicNavbar template.HTML = `<div class="navbar navbar-default navbar-static-top" role="navigation">
+	publicNavbar template.HTML = `
+<div class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <a class="navbar-brand" href="/">KEIJIBAN</a>
@@ -24,7 +25,8 @@ const (
   </div>
 </div>`
 
-	privateNavbar template.HTML = `<div class="navbar navbar-default navbar-static-top" role="navigation">
+	privateNavbar template.HTML = `
+<div class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" role="navigation">
   <div class="container">
     <div class="navbar-header">
 	  <a class="navbar-brand" href="/">KEIJIBAN</a>
@@ -35,13 +37,14 @@ const (
   </div>
 </div>`
 
-	replyForm template.HTML = `<div class="panel panel-info">
+	replyForm template.HTML = `
+<div class="panel panel-info">
   <div class="panel-body">
     <form id="post" role="form" action="/topic/post" method="post">
 	  <div class="form-group">
-	    <textarea class="form-control" name="body" id="body" placeholder="Write your reply here" rows="3"></textarea>
-	     <br/>
-	     <button class="btn btn-primary pull-right" type="submit">Reply</button>
+	  	<textarea class="form-control" name="body" id="body" placeholder="Write your reply here" rows="3"></textarea>
+	    <br>
+		<button class="btn btn-primary pull-right" type="submit">Reply</button>
 	  </div>
     </form>
   </div>
@@ -399,7 +402,7 @@ func newTopicGet(ctx *gin.Context) {
 	if loggedin {
 		ctx.HTML(
 			http.StatusOK,
-			"newthread.html",
+			"newtopic.html",
 			gin.H{
 				"navbar": navbar,
 				"state":  state,

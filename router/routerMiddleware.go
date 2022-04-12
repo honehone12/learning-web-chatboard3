@@ -19,6 +19,7 @@ const (
 func SetCommonHeadersMiddleware(ctx *gin.Context) {
 	ctx.Header("Cache-Control", "no-store")
 	ctx.Header("X-Frame-Options", "DENY")
+	ctx.Header("X-Content-Type-Options", "nosniff")
 	ctx.Next()
 }
 

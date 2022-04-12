@@ -12,22 +12,26 @@
     <div class="container">
       
       <p class="lead">
-        <a href="/topic/new">Start a thread</a> or join one below!
+        Log in your account or <a href="/user/signup">sign up now!!</a>
       </p>
       
       <form class="form-signin center" role="form" action="/user/authenticate" method="post">
         <h2 class="form-signin-heading">
-          <i class="fa fa-comments-o">
-            KEIJIBAN
-          </i>
+          KEIJIBAN
         </h2>
+
         <input type="hidden" name="state" value="{{ .state }}">
-        <input type="email" name="email" class="form-control" placeholder="Email address" required autofocus>
-        <input type="password" name="password" class="form-control" placeholder="Password" required>
+        <div class="form-floating">
+          <input type="email" name="email" class="form-control" id="floating-email" placeholder="Email address" required autofocus>
+          <label for="floating-email">Email address</label>
+        </div>
+        <div class="form-floating">
+          <input type="password" name="password" class="form-control" id="floating-password" placeholder="Password" required>
+          <label for="floating-password">Password</label>
+        </div>
+
         <br/>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-        <br/>
-        <a class="lead pull-right" href="/user/signup">Sign up</a>
       </form>      
       
     </div> <!-- /container -->

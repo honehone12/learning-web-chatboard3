@@ -12,21 +12,29 @@
 
     <div class="container">
                 
-        <div class="panel-heading">
-            <span class="lead"> <i class="fa fa-comment-o"></i> {{ .topic.Topic }}</span>
-            <div class="pull-right">
+        <div class="container pt-4">
+          <header class="py-3 my-3">
+            <h2 class="display-2">
+              {{ .topic.Topic }}
+            </h2>
+            <p class="fs-5">
               Started by {{ .topic.Owner }} - {{ .topic.When }}
-            </div>
+            </p>
+          </header>
         </div>
 
+        <div class="container">
         {{ range .replies }}
-        <div class="panel-body">
-            <span class="lead"> <i class="fa fa-comment"></i> {{ .Body }}</span>
-            <div class="pull-right">
-            {{ .Contributor }} - {{ .When }}
-            </div>    
-        </div>
+          <div class="p-3 mb-3 bg-light rounded-3">
+            <div class="p-2">
+              <h6 class="display-6 fw-normal">{{ .Body }}</h6>
+            </div>
+            <h5 class="heading-5">
+              {{ .Contributor }} - {{ .When }}
+            </h5>
+          </div>
         {{ end }}
+        </div>
       
         <input form="post" type="hidden" name="state" value="{{ .state }}">
 
