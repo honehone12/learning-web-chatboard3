@@ -37,6 +37,19 @@ func createUserInternal(user *common.User) (err error) {
 	return
 }
 
+func createUserSQL(user *common.User) (err error) {
+	affected, err := dbEngine.
+		Table(usersTable).
+		InsertOne(user)
+	if err == nil && affected != 1 {
+		err = fmt.Errorf(
+			"something wrong. returned value was %d",
+			affected,
+		)
+	}
+	return
+}
+
 func createLogin(user *common.User, corrId string) {
 	login, err := createLoginInternal(user)
 	if err != nil {
@@ -64,6 +77,19 @@ func createLoginInternal(user *common.User) (login *common.Login, err error) {
 	return
 }
 
+func createLoginSQL(login *common.Login) (err error) {
+	affected, err := dbEngine.
+		Table(loginsTable).
+		InsertOne(login)
+	if err == nil && affected != 1 {
+		err = fmt.Errorf(
+			"something's wrong. returned value was %d",
+			affected,
+		)
+	}
+	return
+}
+
 func readUser(user *common.User, corrId string) {
 	err := readUserInternal(user)
 	if err != nil {
@@ -83,6 +109,17 @@ func readUserInternal(user *common.User) (err error) {
 	return
 }
 
+func readUserSQL(user *common.User) (err error) {
+	var ok bool
+	ok, err = dbEngine.
+		Table(usersTable).
+		Get(user)
+	if err == nil && !ok {
+		err = errors.New("no such user")
+	}
+	return
+}
+
 func readLogin(login *common.Login, corrId string) {
 	err := readLoginInternal(login)
 	if err != nil {
@@ -99,6 +136,17 @@ func readLoginInternal(login *common.Login) (err error) {
 		return
 	}
 	err = readLoginSQL(login)
+	return
+}
+
+func readLoginSQL(login *common.Login) (err error) {
+	var ok bool
+	ok, err = dbEngine.
+		Table(loginsTable).
+		Get(login)
+	if err == nil && !ok {
+		err = errors.New("no such login")
+	}
 	return
 }
 
@@ -125,6 +173,20 @@ func updateLoginInternal(login *common.Login) (err error) {
 	return
 }
 
+func updateLoginSQL(login *common.Login) (err error) {
+	affected, err := dbEngine.
+		Table(loginsTable).
+		ID(login.Id).
+		Update(login)
+	if err == nil && affected != 1 {
+		err = fmt.Errorf(
+			"something wrong. returned value was %d",
+			affected,
+		)
+	}
+	return
+}
+
 func deleteLogin(login *common.Login, corrId string) {
 	err := deleteLoginInternal(login)
 	if err != nil {
@@ -139,68 +201,6 @@ func deleteLogin(login *common.Login, corrId string) {
 
 func deleteLoginInternal(login *common.Login) (err error) {
 	err = deleteLoginSQL(login)
-	return
-}
-
-func createUserSQL(user *common.User) (err error) {
-	affected, err := dbEngine.
-		Table(usersTable).
-		InsertOne(user)
-	if err == nil && affected != 1 {
-		err = fmt.Errorf(
-			"something wrong. returned value was %d",
-			affected,
-		)
-	}
-	return
-}
-
-func createLoginSQL(login *common.Login) (err error) {
-	affected, err := dbEngine.
-		Table(loginsTable).
-		InsertOne(login)
-	if err == nil && affected != 1 {
-		err = fmt.Errorf(
-			"something's wrong. returned value was %d",
-			affected,
-		)
-	}
-	return
-}
-
-func readUserSQL(user *common.User) (err error) {
-	var ok bool
-	ok, err = dbEngine.
-		Table(usersTable).
-		Get(user)
-	if err == nil && !ok {
-		err = errors.New("no such user")
-	}
-	return
-}
-
-func readLoginSQL(login *common.Login) (err error) {
-	var ok bool
-	ok, err = dbEngine.
-		Table(loginsTable).
-		Get(login)
-	if err == nil && !ok {
-		err = errors.New("no such login")
-	}
-	return
-}
-
-func updateLoginSQL(login *common.Login) (err error) {
-	affected, err := dbEngine.
-		Table(loginsTable).
-		ID(login.Id).
-		Update(login)
-	if err == nil && affected != 1 {
-		err = fmt.Errorf(
-			"something wrong. returned value was %d",
-			affected,
-		)
-	}
 	return
 }
 

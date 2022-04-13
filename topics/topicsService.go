@@ -36,6 +36,19 @@ func createTopicInternal(topic *common.Topic) (err error) {
 	return
 }
 
+func createTopicSQL(topic *common.Topic) (err error) {
+	affected, err := dbEngine.
+		Table(topicsTable).
+		InsertOne(&topic)
+	if err == nil && affected != 1 {
+		err = fmt.Errorf(
+			"something wrong. returned value was %d",
+			affected,
+		)
+	}
+	return
+}
+
 func createReply(reply *common.Reply, corrId string) {
 	err := createReplyInternal(reply)
 	if err != nil {
@@ -60,6 +73,19 @@ func createReplyInternal(reply *common.Reply) (err error) {
 	return
 }
 
+func createReplySQL(reply *common.Reply) (err error) {
+	affected, err := dbEngine.
+		Table(repliesTable).
+		InsertOne(reply)
+	if err == nil && affected != 1 {
+		err = fmt.Errorf(
+			"something wrong. returned value was %d",
+			affected,
+		)
+	}
+	return
+}
+
 func readATopic(topic *common.Topic, corrId string) {
 	err := readATopicInternal(topic)
 	if err != nil {
@@ -76,6 +102,16 @@ func readATopicInternal(topic *common.Topic) (err error) {
 		return
 	}
 	err = readATopicSQL(topic)
+	return
+}
+
+func readATopicSQL(topic *common.Topic) (err error) {
+	ok, err := dbEngine.
+		Table(topicsTable).
+		Get(topic)
+	if err == nil && !ok {
+		err = errors.New("no such thread")
+	}
 	return
 }
 
@@ -100,6 +136,20 @@ func updateTopicInternal(topic *common.Topic) (err error) {
 	}
 	topic.LastUpdate = time.Now()
 	err = updateTopicSQL(topic)
+	return
+}
+
+func updateTopicSQL(topic *common.Topic) (err error) {
+	affected, err := dbEngine.
+		Table(topicsTable).
+		ID(topic.Id).
+		Update(topic)
+	if err == nil && affected != 1 {
+		err = fmt.Errorf(
+			"something wrong. returned value was %d",
+			affected,
+		)
+	}
 	return
 }
 
@@ -135,6 +185,14 @@ func readRepliesInTopic(topic *common.Topic, corrId string) {
 	common.SendOK(server, &replies, "ReplySlice", corrId)
 }
 
+func readRepliesInTopicSQL(topic *common.Topic) (posts []common.Reply, err error) {
+	err = dbEngine.
+		Table(repliesTable).
+		Where("topic_id = ?", topic.Id).
+		Find(&posts)
+	return
+}
+
 func readTopics(corrId string) {
 	topics, err := readTopicsSQL()
 	if err != nil {
@@ -145,68 +203,10 @@ func readTopics(corrId string) {
 	}
 }
 
-func createTopicSQL(topic *common.Topic) (err error) {
-	affected, err := dbEngine.
-		Table(topicsTable).
-		InsertOne(&topic)
-	if err == nil && affected != 1 {
-		err = fmt.Errorf(
-			"something wrong. returned value was %d",
-			affected,
-		)
-	}
-	return
-}
-
-func createReplySQL(reply *common.Reply) (err error) {
-	affected, err := dbEngine.
-		Table(repliesTable).
-		InsertOne(reply)
-	if err == nil && affected != 1 {
-		err = fmt.Errorf(
-			"something wrong. returned value was %d",
-			affected,
-		)
-	}
-	return
-}
-
 func readTopicsSQL() (topics []common.Topic, err error) {
 	err = dbEngine.
 		Table(topicsTable).
 		Desc(descendingUpdate).
 		Find(&topics)
-	return
-}
-
-func readATopicSQL(topic *common.Topic) (err error) {
-	ok, err := dbEngine.
-		Table(topicsTable).
-		Get(topic)
-	if err == nil && !ok {
-		err = errors.New("no such thread")
-	}
-	return
-}
-
-func updateTopicSQL(topic *common.Topic) (err error) {
-	affected, err := dbEngine.
-		Table(topicsTable).
-		ID(topic.Id).
-		Update(topic)
-	if err == nil && affected != 1 {
-		err = fmt.Errorf(
-			"something wrong. returned value was %d",
-			affected,
-		)
-	}
-	return
-}
-
-func readRepliesInTopicSQL(topic *common.Topic) (posts []common.Reply, err error) {
-	err = dbEngine.
-		Table(repliesTable).
-		Where("topic_id = ?", topic.Id).
-		Find(&posts)
 	return
 }
