@@ -9,7 +9,8 @@ CREATE TABLE users (
   uu_id      VARCHAR(255) NOT NULL UNIQUE,
   name       VARCHAR(255) NOT NULL UNIQUE,
   email      VARCHAR(255) NOT NULL UNIQUE,
-  password   VARCHAR(255) NOT NULL,
+  password   TEXT NOT NULL,
+  salt       VARCHAR(255) NOT NULL,
   created_at TIMESTAMP NOT NULL   
 );
 
@@ -19,6 +20,7 @@ CREATE TABLE logins (
   user_name   VARCHAR(255),
   user_id     SERIAL REFERENCES users(id),
   state       TEXT,
+  salt        VARCHAR(255),
   last_update TIMESTAMP NOT NULL,
   created_at  TIMESTAMP NOT NULL   
 );
@@ -27,8 +29,9 @@ CREATE TABLE sessions (
   id           SERIAL PRIMARY KEY,
   uu_id        VARCHAR(255) NOT NULL UNIQUE,
   state        TEXT,
-  topic_uu_id TEXT,
-  topic_id    SERIAL,
+  salt         VARCHAR(255),
+  topic_uu_id  TEXT,
+  topic_id     SERIAL,
   created_at   TIMESTAMP NOT NULL
 );
 

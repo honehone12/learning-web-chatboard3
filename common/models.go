@@ -11,6 +11,7 @@ type User struct {
 	Name      string    `xorm:"not null unique 'name'" json:"name"`
 	Email     string    `xorm:"not null unique 'email'" json:"email"`
 	Password  string    `xorm:"not null 'password'" json:"password"`
+	Salt      string    `xorm:"not null 'salt'" json:"salt"`
 	CreatedAt time.Time `xorm:"not null 'created_at'" json:"created_at"`
 }
 
@@ -22,6 +23,7 @@ type Login struct {
 	UserName   string    `xorm:"user_name" json:"user_name"`
 	UserId     uint      `xorm:"user_id" json:"user_id"`
 	State      string    `xorm:"TEXT 'state'" json:"state"`
+	Salt       string    `xorm:"salt" json:"salt"`
 	LastUpdate time.Time `xorm:"not null 'last_update'" json:"last_update"`
 	CreatedAt  time.Time `xorm:"not null 'created_at'" json:"created_at"`
 }
@@ -32,6 +34,7 @@ type Session struct {
 	Id        uint      `xorm:"pk autoincr 'id'" json:"id"`
 	UuId      string    `xorm:"not null unique 'uu_id'" json:"uuid"`
 	State     string    `xorm:"TEXT 'state'" json:"state"`
+	Salt      string    `xorm:"salt" json:"salt"`
 	TopicId   uint      `xorm:"topic_id" json:"topic_id"`
 	TopicUuId string    `xorm:"topic_uu_id" json:"topic_uuid"`
 	CreatedAt time.Time `xorm:"not null 'created_at'" json:"created_at"`

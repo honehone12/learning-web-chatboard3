@@ -24,15 +24,15 @@ import (
 
 const (
 	runeSource         = "aA1bB2cC3dD4eE5fFgGhHiIjJkKlLm0MnNoOpPqQrRsStTuUvV6wW7xX8yY9zZ"
-	macSalt            = "uPUqL7dZ"
-	pwSalt             = "LV2vP8vq"
 	loginCookieLabel   = "short-time"
 	sessionCookieLabel = "long-time"
 )
 
 const (
 	aes256KeySize uint          = 32
-	macKeySize    uint          = 32
+	macKeySize    uint          = 64
+	pwSaltSize    uint          = 16
+	numStretching int           = 10000
 	stateSize     uint          = 32
 	longinExp     time.Duration = time.Hour * 8
 	stateExp      time.Duration = time.Minute * 20
@@ -61,16 +61,23 @@ func startHelper() (err error) {
 }
 
 func makeHash(plainText string) (hashed string) {
-	asBytes := sha256.Sum256([]byte(plainText))
+	asBytes := []byte(plainText)
+	hash := sha256.New()
+	for i := 0; i < numStretching; i++ {
+		asBytes = hash.Sum(asBytes)
+	}
+
 	hashed = fmt.Sprintf("%x", asBytes)
 	return
 }
 
-func processPassword(pw string) string {
+func processPassword(pw, salt string) (hashed string) {
 	// see these pkgs
 	// https://pkg.go.dev/golang.org/x/crypto/bcrypt
 	// https://pkg.go.dev/golang.org/x/crypto/scrypt
-	return makeHash(fmt.Sprint(pwSalt, pw))
+
+	hashed = makeHash(fmt.Sprint(salt, pw))
+	return
 }
 
 func generateString(length uint) (str string, err error) {
@@ -113,13 +120,13 @@ func decrypt(cipherText []byte) (plainText string, err error) {
 func makeMAC(value []byte) []byte {
 	hash := hmac.New(sha256.New, helper.macKey)
 	hash.Write(value)
-	return hash.Sum([]byte(macSalt))
+	return hash.Sum(nil)
 }
 
 func verifyMAC(mac []byte, value []byte) bool {
 	hash := hmac.New(sha256.New, helper.macKey)
 	hash.Write(value)
-	hashedVal := hash.Sum([]byte(macSalt))
+	hashedVal := hash.Sum(nil)
 	return hmac.Equal(mac, hashedVal)
 }
 

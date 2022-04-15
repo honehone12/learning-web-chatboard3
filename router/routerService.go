@@ -200,11 +200,17 @@ func signupPostInternal(ctx *gin.Context) (err error) {
 		return
 	}
 
-	pw := processPassword(ctx.PostForm("password"))
+	var salt string
+	salt, err = generateString(pwSaltSize)
+	if err != nil {
+		return
+	}
+	pw := processPassword(ctx.PostForm("password"), salt)
 	newUser := common.User{
 		Name:     ctx.PostForm("name"),
 		Email:    ctx.PostForm("email"),
 		Password: pw,
+		Salt:     salt,
 	}
 
 	err = sendRequest(
@@ -264,7 +270,7 @@ func authenticatePostInternal(ctx *gin.Context) (err error) {
 		return
 	}
 
-	pw := processPassword(ctx.PostForm("password"))
+	pw := processPassword(ctx.PostForm("password"), authUser.Salt)
 	if strings.Compare(authUser.Password, pw) != 0 {
 		err = errors.New("password mismatch")
 		return
