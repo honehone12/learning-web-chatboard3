@@ -20,7 +20,6 @@ CREATE TABLE logins (
   user_name   VARCHAR(255),
   user_id     SERIAL REFERENCES users(id),
   state       TEXT,
-  salt        VARCHAR(255),
   last_update TIMESTAMP NOT NULL,
   created_at  TIMESTAMP NOT NULL   
 );
@@ -29,7 +28,6 @@ CREATE TABLE sessions (
   id           SERIAL PRIMARY KEY,
   uu_id        VARCHAR(255) NOT NULL UNIQUE,
   state        TEXT,
-  salt         VARCHAR(255),
   topic_uu_id  TEXT,
   topic_id     SERIAL,
   created_at   TIMESTAMP NOT NULL
